@@ -1,221 +1,372 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDFLivre - Ferramentas de PDF 100% Online</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Biblioteca real para manipular PDF no navegador -->
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <!-- Biblioteca para gerar QR Code no navegador -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conversor Otimizado — PDF / Word / Excel / PowerPoint</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- PDF.js (leitura e renderização de alta resolução de PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- SheetJS (geração de planilhas XLSX) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- DOCX.js (geração de documentos Word DOCX) -->
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+  <!-- PptxGenJS (geração de apresentações PowerPoint PPTX) -->
+  <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
-
-    <!-- Cabeçalho -->
-    <header class="bg-white border-b border-slate-200 py-4 px-6 shadow-xs">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold text-indigo-600">📄 PDFLivre</h1>
-            <div class="flex items-center gap-3">
-                <span id="status-badge" class="text-xs bg-slate-100 text-slate-600 font-medium px-3 py-1 rounded-full border border-slate-200">
-                    Plano Gratuito (Até 10 MB)
-                </span>
-                <button id="btn-upgrade-header" onclick="abrirModalPix()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-3 py-1 rounded-full transition cursor-pointer">
-                    Liberar Ilimitado
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Conteúdo Principal -->
-    <main class="max-w-xl mx-auto p-6 w-full my-auto">
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
-            <h2 class="text-2xl font-bold mb-2">Unir Arquivos PDF</h2>
-            <p class="text-slate-500 text-sm mb-6">Selecione 2 ou mais arquivos PDF para juntar em um só. Processamento 100% no seu navegador.</p>
-
-            <!-- Área de Upload -->
-            <label class="border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer bg-slate-50 transition">
-                <svg class="w-10 h-10 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                <span class="text-sm font-medium text-slate-700">Clique para selecionar os PDFs</span>
-                <span class="text-xs text-slate-400 mt-1">Soma total até 10 MB no plano gratuito</span>
-                <input type="file" id="pdf-input" accept=".pdf" multiple class="hidden">
-            </label>
-
-            <!-- Status / Download -->
-            <div id="output-area" class="mt-6 hidden">
-                <div class="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-sm font-medium mb-4">
-                    ✨ PDFs unidos com sucesso!
-                </div>
-                <a id="download-link" class="inline-block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition shadow-xs">
-                    ⬇️ Baixar PDF Unido
-                </a>
-                <button onclick="resetarApp()" class="mt-4 text-xs text-slate-500 hover:underline block mx-auto cursor-pointer">Processar outros arquivos</button>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal de Pix Estático -->
-    <div id="pix-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl text-center">
-            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">Pix</div>
-            <h3 class="text-xl font-bold text-slate-900 mb-1">Passe Ilimitado (24 horas)</h3>
-            <p class="text-sm text-slate-500 mb-4">Arquivos acima de 10 MB exigem o Passe Diário. Pague **R$ 4,90** via Pix para liberar imediatamente.</p>
-            
-            <!-- QR Code Gerado Localmente -->
-            <div class="bg-slate-100 p-4 rounded-xl border border-slate-200 mb-4 flex flex-col items-center">
-                <div id="qrcode-container" class="bg-white p-2 rounded-lg border border-slate-300 mb-3"></div>
-                <label class="text-xs text-slate-500 mb-1">Pix Copia e Cola:</label>
-                <div class="flex w-full gap-1">
-                    <input type="text" id="pix-copia-cola" readonly class="text-xs text-slate-600 font-mono bg-white p-2 rounded border border-slate-200 w-full" />
-                    <button onclick="copiarPix()" class="bg-slate-800 text-white text-xs px-3 rounded hover:bg-slate-700 cursor-pointer">Copiar</button>
-                </div>
-            </div>
-
-            <button id="btn-confirmar-pix" onclick="confirmarPagamentoManual()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 rounded-xl transition mb-2 cursor-pointer">
-                Já fiz o pagamento Pix
-            </button>
-            <button onclick="fecharModal()" class="w-full text-xs text-slate-500 hover:text-slate-800 py-2 cursor-pointer">
-                Cancelar / Voltar
-            </button>
-        </div>
+<body class="bg-slate-50 text-slate-800 p-6">
+  <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
+    <div>
+      <h1 class="text-xl font-bold text-slate-900">Conversor Otimizado de Documentos</h1>
+      <p class="text-sm text-slate-600 mt-1">
+        Agrupamento inteligente de parágrafos, detecção de grade tabular para Excel e alta resolução de renderização.
+      </p>
     </div>
 
-    <!-- Rodapé -->
-    <footer class="text-center py-4 text-xs text-slate-400 border-t border-slate-200">
-        &copy; 2026 PDFLivre. Processamento 100% local e privado.
-    </footer>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Arquivo de entrada</label>
+        <input id="fileInput" type="file" accept=".pdf,.xlsx,.xls,.csv,.txt"
+               class="block w-full text-sm text-slate-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+      </div>
 
-    <script>
-        // ==========================================
-        // CONFIGURAÇÕES DO SEU PIX E LIMITE
-        // ==========================================
-        const LIMITE_GRATUITO_MB = 10;
-        // Cole aqui o código "Pix Copia e Cola" de R$ 4,90 gerado no app do seu banco
-        const SEU_CODIGO_PIX_COPIA_E_COLA = "00020126580014br.gov.bcb.pix0136sua-chave-pix-aqui52040000530398654044.905802BR5913PDFLivre App6009SAO PAULO62070503***6304ABCD";
-        const CHAVE_URL_SECRETA = "PASSE24H"; // Ex: seusite.com/?liberar=PASSE24H
+      <div>
+        <label class="block text-xs font-semibold uppercase text-slate-500 mb-1">Formato de saída</label>
+        <select id="targetFormat" class="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm bg-white">
+          <option value="docx">PDF → Word (.docx) [Parágrafos agrupados]</option>
+          <option value="xlsx">PDF → Excel (.xlsx) [Grade por coordenadas]</option>
+          <option value="pptx">PDF → PowerPoint (.pptx) [Slides + Alta DPI]</option>
+          <option value="pdf-from-sheet">Planilha/CSV → PDF (.pdf) [Tabela estruturada]</option>
+        </select>
+      </div>
+    </div>
 
-        const input = document.getElementById('pdf-input');
-        const modal = document.getElementById('pix-modal');
-        const outputArea = document.getElementById('output-area');
-        const statusBadge = document.getElementById('status-badge');
+    <div class="flex items-center justify-between gap-4 pt-2">
+      <label class="inline-flex items-center gap-2 text-xs text-slate-600">
+        <input id="highQualityScale" type="checkbox" checked class="rounded border-slate-300 text-blue-600" />
+        Renderização em alta escala (2.2x / ~158 DPI) para maior nitidez
+      </label>
 
-        // 1. Verifica se o usuário voltou de um Link de Pagamento com a chave na URL
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('liberar') === CHAVE_URL_SECRETA) {
-            ativarPasse24Horas();
-            // Limpa a URL para o usuário não compartilhar o link de graça facilmente
-            window.history.replaceState({}, document.title, window.location.pathname);
+      <button id="convertBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition">
+        Converter com qualidade
+      </button>
+    </div>
+
+    <div id="statusBox" class="text-xs text-slate-600 bg-slate-100 rounded-xl p-3 hidden"></div>
+  </div>
+
+  <script>
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const statusBox = document.getElementById('statusBox');
+    const setStatus = (msg) => {
+      statusBox.textContent = msg;
+      statusBox.classList.remove('hidden');
+    };
+
+    /**
+     * Extrai itens de texto com posição (x, y, altura) preservando a ordem visual da página.
+     */
+    async function extractStructuredPdfPages(arrayBuffer) {
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pages = [];
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: 1.0 });
+        const textContent = await page.getTextContent();
+
+        const items = textContent.items
+          .filter((item) => item.str && item.str.trim() !== '')
+          .map((item) => {
+            const [, , , , x, y] = item.transform;
+            return {
+              str: item.str.replace(/\s+/g, ' ').trim(),
+              x: Number(x.toFixed(1)),
+              // Converte coordenada Y de baixo para cima para topo -> base
+              y: Number((viewport.height - y).toFixed(1)),
+              height: Number((item.height || Math.abs(item.transform[0]) || 11).toFixed(1))
+            };
+          })
+          // Ordena de cima para baixo e depois da esquerda para a direita
+          .sort((a, b) => {
+            const yDiff = a.y - b.y;
+            if (Math.abs(yDiff) > 4) return yDiff;
+            return a.x - b.x;
+          });
+
+        pages.push({ pageNum, width: viewport.width, height: viewport.height, items });
+      }
+
+      return pages;
+    }
+
+    /**
+     * Agrupa fragmentos de texto em linhas e parágrafos reais (reduz quebra de linha artificial).
+     */
+    function groupItemsIntoParagraphs(items) {
+      if (!items.length) return [];
+
+      const lines = [];
+      for (const item of items) {
+        const currentLine = lines[lines.length - 1];
+        if (!currentLine) {
+          lines.push({ y: item.y, height: item.height, parts: [item] });
+          continue;
         }
 
-        // 2. Atualiza visual do plano ao carregar
-        verificarStatusPass();
+        const tolerance = Math.max(4, Math.min(currentLine.height, item.height) * 0.45);
+        if (Math.abs(item.y - currentLine.y) <= tolerance) {
+          currentLine.parts.push(item);
+          currentLine.y = (currentLine.y + item.y) / 2;
+        } else {
+          lines.push({ y: item.y, height: item.height, parts: [item] });
+        }
+      }
 
-        // 3. Gera o QR Code Pix visualmente
-        document.getElementById('pix-copia-cola').value = SEU_CODIGO_PIX_COPIA_E_COLA;
-        new QRCode(document.getElementById("qrcode-container"), {
-            text: SEU_CODIGO_PIX_COPIA_E_COLA,
-            width: 150,
-            height: 150
+      const paragraphs = [];
+      let buffer = '';
+      let prevLine = null;
+
+      for (const line of lines) {
+        line.parts.sort((a, b) => a.x - b.x);
+        let lineText = '';
+        let prevPart = null;
+
+        for (const part of line.parts) {
+          if (prevPart) {
+            const gap = part.x - (prevPart.x + prevPart.str.length * (prevPart.height * 0.42));
+            if (gap > 14 && !lineText.endsWith('\t')) {
+              lineText += '   ';
+            } else if (!lineText.endsWith(' ')) {
+              lineText += ' ';
+            }
+          }
+          lineText += part.str;
+          prevPart = part;
+        }
+
+        lineText = lineText.trim();
+        if (!lineText) continue;
+
+        if (!prevLine) {
+          buffer = lineText;
+        } else {
+          const verticalGap = line.y - prevLine.y;
+          const normalLineSpacing = Math.max(12, prevLine.height * 1.45);
+          const endsSentence = /[.!?:;]$/.test(buffer);
+          const startsNewSection = /^[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9IVX]+[\).\-\s]/.test(lineText) && lineText.length < 70;
+
+          if (verticalGap > normalLineSpacing * 1.35 || (endsSentence && startsNewSection)) {
+            paragraphs.push(buffer);
+            buffer = lineText;
+          } else {
+            buffer += (buffer.endsWith('-') ? '' : ' ') + lineText;
+          }
+        }
+        prevLine = line;
+      }
+
+      if (buffer) paragraphs.push(buffer);
+      return paragraphs;
+    }
+
+    /**
+     * Reconstrói grade tabular usando clusters de posição horizontal (X) para melhorar o Excel.
+     */
+    function buildTableRowsFromItems(items) {
+      if (!items.length) return [];
+
+      const xPositions = items.map((i) => i.x).sort((a, b) => a - b);
+      const columns = [];
+      const colThreshold = 22;
+
+      for (const x of xPositions) {
+        const lastCol = columns[columns.length - 1];
+        if (!lastCol || Math.abs(x - lastCol.center) > colThreshold) {
+          columns.push({ center: x, count: 1, sum: x });
+        } else {
+          lastCol.count += 1;
+          lastCol.sum += x;
+          lastCol.center = lastCol.sum / lastCol.count;
+        }
+      }
+
+      const activeCols = columns
+        .filter((c) => c.count >= 2)
+        .sort((a, b) => a.center - b.center);
+
+      // Se não houver grade clara, cai para linhas agrupadas
+      if (activeCols.length < 2) {
+        return groupItemsIntoParagraphs(items).map((text) => [text]);
+      }
+
+      const rowsMap = new Map();
+      for (const item of items) {
+        const rowKey = Math.round(item.y / 8);
+        if (!rowsMap.has(rowKey)) {
+          rowsMap.set(rowKey, new Array(activeCols.length).fill(''));
+        }
+
+        let bestColIdx = 0;
+        let minDist = Infinity;
+        activeCols.forEach((col, idx) => {
+          const dist = Math.abs(item.x - col.center);
+          if (dist < minDist) {
+            minDist = dist;
+            bestColIdx = idx;
+          }
         });
 
-        // 4. Lógica de Upload e Junção Real de PDFs
-        input.addEventListener('change', async function(e) {
-            const files = Array.from(e.target.files);
-            if (files.length < 2) {
-                alert('Selecione pelo menos 2 arquivos PDF para unir.');
-                input.value = '';
-                return;
+        const existing = rowsMap.get(rowKey)[bestColIdx];
+        rowsMap.get(rowKey)[bestColIdx] = existing ? `${existing} ${item.str}`.trim() : item.str;
+      }
+
+      return Array.from(rowsMap.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([, row]) => row)
+        .filter((row) => row.some((cell) => cell !== ''));
+    }
+
+    /**
+     * Renderiza página do PDF em canvas de alta resolução para apoio visual em slides.
+     */
+    async function renderPageHighResDataUrl(arrayBuffer, pageNum, scale = 2.2) {
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.floor(viewport.width);
+      canvas.height = Math.floor(viewport.height);
+      const ctx = canvas.getContext('2d', { alpha: false });
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      return canvas.toDataURL('image/png', 1.0);
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    document.getElementById('convertBtn').addEventListener('click', async () => {
+      const file = document.getElementById('fileInput').files[0];
+      const format = document.getElementById('targetFormat').value;
+      const scale = document.getElementById('highQualityScale').checked ? 2.2 : 1.25;
+
+      if (!file) {
+        setStatus('Selecione um arquivo antes de iniciar a conversão.');
+        return;
+      }
+
+      try {
+        setStatus('Processando estrutura do documento com otimização de layout...');
+        const baseName = file.name.replace(/\.[^.]+$/, '');
+        const buffer = await file.arrayBuffer();
+
+        if (format === 'docx') {
+          const pages = await extractStructuredPdfPages(buffer);
+          const { Document, Packer, Paragraph, TextRun, HeadingLevel } = window.docx;
+          const children = [];
+
+          for (const p of pages) {
+            children.push(
+              new Paragraph({
+                text: `Página ${p.pageNum}`,
+                heading: HeadingLevel.HEADING_2,
+                spacing: { before: 200, after: 100 }
+              })
+            );
+
+            const paragraphs = groupItemsIntoParagraphs(p.items);
+            for (const text of paragraphs) {
+              children.push(
+                new Paragraph({
+                  children: [new TextRun({ text, font: 'Calibri', size: 22 })],
+                  spacing: { after: 140, line: 276 }
+                })
+              );
             }
+          }
 
-            // Calcula o tamanho total dos arquivos em MB
-            const totalBytes = files.reduce((acc, file) => acc + file.size, 0);
-            const totalMB = totalBytes / (1024 * 1024);
+          const doc = new Document({ sections: [{ children }] });
+          const blob = await Packer.toBlob(doc);
+          downloadBlob(blob, `${baseName}_otimizado.docx`);
+          setStatus('Arquivo DOCX gerado com agrupamento de parágrafos.');
+        } else if (format === 'xlsx') {
+          const pages = await extractStructuredPdfPages(buffer);
+          const wb = XLSX.utils.book_new();
 
-            if (totalMB > LIMITE_GRATUITO_MB && !temPasseValido()) {
-                input.value = '';
-                abrirModalPix();
-                return;
-            }
+          for (const p of pages) {
+            const rows = buildTableRowsFromItems(p.items);
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            // Ajusta largura automática das colunas para evitar truncamento
+            ws['!cols'] = (rows[0] || []).map((_, colIdx) => {
+              const maxLen = rows.reduce((acc, r) => Math.max(acc, String(r[colIdx] || '').length), 12);
+              return { wch: Math.min(maxLen + 4, 55) };
+            });
+            XLSX.utils.book_append_sheet(wb, ws, `Pagina_${p.pageNum}`);
+          }
 
-            await unirPDFs(files);
-        });
+          XLSX.writeFile(wb, `${baseName}_otimizado.xlsx`);
+          setStatus('Planilha XLSX gerada com alinhamento de colunas e ajuste de largura.');
+        } else if (format === 'pptx') {
+          const pages = await extractStructuredPdfPages(buffer.slice(0));
+          const pptx = new window.PptxGenJS();
+          pptx.layout = 'LAYOUT_WIDE';
 
-        async function unirPDFs(files) {
-            try {
-                const { PDFDocument } = PDFLib;
-                const pdfFinal = await PDFDocument.create();
+          for (const p of pages) {
+            const slide = pptx.addSlide();
+            const imgData = await renderPageHighResDataUrl(buffer.slice(0), p.pageNum, scale);
+            // Insere visualização de alta nitidez ocupando o slide com margem limpa
+            slide.addImage({ data: imgData, x: 0.4, y: 0.35, w: 12.5, h: 6.8 });
+          }
 
-                for (const file of files) {
-                    const arrayBuffer = await file.arrayBuffer();
-                    const pdfDoc = await PDFDocument.load(arrayBuffer);
-                    const paginas = await pdfFinal.copyPages(pdfDoc, pdfDoc.getPageIndices());
-                    paginas.forEach((pagina) => pdfFinal.addPage(pagina));
-                }
+          await pptx.writeFile({ fileName: `${baseName}_alta_qualidade.pptx` });
+          setStatus('Apresentação PPTX gerada em alta resolução.');
+        } else if (format === 'pdf-from-sheet') {
+          const wb = XLSX.read(buffer, { type: 'array' });
+          const firstSheet = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-                const pdfBytes = await pdfFinal.save();
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
+          // Renderiza tabela limpa em canvas de alta resolução e dispara impressão/exportação ou gera PDF simples
+          const printWindow = window.open('', '_blank');
+          const htmlRows = rows
+            .map(
+              (r) =>
+                `<tr>${r
+                  .map(
+                    (c) =>
+                      `<td style="border:1px solid #cbd5e1;padding:6px 10px;font-size:12px;">${String(
+                        c ?? ''
+                      )}</td>`
+                  )
+                  .join('')}</tr>`
+            )
+            .join('');
 
-                const downloadLink = document.getElementById('download-link');
-                downloadLink.href = url;
-                downloadLink.download = 'documento-unido.pdf';
-
-                outputArea.classList.remove('hidden');
-            } catch (erro) {
-                console.error(erro);
-                alert('Erro ao processar os PDFs. Verifique se algum arquivo está protegido por senha.');
-            }
+          printWindow.document.write(`
+            <html><head><title>${baseName}</title>
+            <style>@page { size: A4 landscape; margin: 12mm; } body { font-family: Arial, sans-serif; } table { border-collapse: collapse; width: 100%; }</style>
+            </head><body><table>${htmlRows}</table><script>window.print();<\/script></body></html>
+          `);
+          printWindow.document.close();
+          setStatus('Visualização de impressão aberta em paisagem A4 para salvar como PDF nítido.');
         }
-
-        function confirmarPagamentoManual() {
-            const btn = document.getElementById('btn-confirmar-pix');
-            btn.disabled = true;
-            btn.textContent = 'Verificando compensação Pix...';
-
-            // Simula um tempo de checagem de 4 segundos para evitar cliques acidentais
-            setTimeout(() => {
-                ativarPasse24Horas();
-                btn.disabled = false;
-                btn.textContent = 'Já fiz o pagamento Pix';
-                fecharModal();
-                alert('Acesso ilimitado liberado por 24 horas! Selecione seus arquivos novamente.');
-            }, 4000);
-        }
-
-        function ativarPasse24Horas() {
-            const expiraEm = Date.now() + (24 * 60 * 60 * 1000);
-            localStorage.setItem('pdf_pass_expira', expiraEm);
-            verificarStatusPass();
-        }
-
-        function temPasseValido() {
-            const expiraEm = localStorage.getItem('pdf_pass_expira');
-            if (!expiraEm) return false;
-            return Date.now() < parseInt(expiraEm, 10);
-        }
-
-        function verificarStatusPass() {
-            if (temPasseValido()) {
-                statusBadge.textContent = '✨ Passe Ilimitado Ativo (24h)';
-                statusBadge.className = 'text-xs bg-emerald-50 text-emerald-700 font-medium px-3 py-1 rounded-full border border-emerald-200';
-                document.getElementById('btn-upgrade-header').classList.add('hidden');
-            }
-        }
-
-        function copiarPix() {
-            const inputPix = document.getElementById('pix-copia-cola');
-            inputPix.select();
-            navigator.clipboard.writeText(inputPix.value);
-            alert('Código Pix copiado!');
-        }
-
-        function abrirModalPix() { modal.classList.remove('hidden'); }
-        function fecharModal() { modal.classList.add('hidden'); }
-        function resetarApp() {
-            outputArea.classList.add('hidden');
-            input.value = '';
-        }
-    </script>
+      } catch (err) {
+        console.error(err);
+        setStatus(`Erro na conversão: ${err.message || 'verifique o arquivo selecionado.'}`);
+      }
+    });
+  </script>
 </body>
 </html>
